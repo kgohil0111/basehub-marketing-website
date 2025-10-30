@@ -3,7 +3,6 @@ import { BaseHubImage } from "basehub/next-image";
 
 import { Pump } from "basehub/react-pump";
 
-import { ThemeSwitcher } from "../theme-switcher";
 import { ButtonLink } from "@/common/button";
 import { DarkLightImageAutoscale } from "@/common/dark-light-image";
 import Link from "next/link";
@@ -85,16 +84,6 @@ export async function Footer() {
                   </ButtonLink>
                 ))}
               </nav>
-              <div className="col-start-2 row-start-1 flex items-center gap-3 self-center justify-self-end sm:col-span-1 sm:col-start-3 sm:row-start-1">
-                <p className="hidden text-text-tertiary dark:text-dark-text-tertiary sm:block">
-                  Appearance
-                </p>
-                <ThemeSwitcher />
-              </div>
-
-              <p className="col-span-2 text-pretty text-sm text-text-tertiary dark:text-dark-text-tertiary sm:col-span-1 ">
-                {footer.copyright}
-              </p>
 
               <ul className="col-span-2 col-start-1 row-start-3 flex w-full items-center gap-x-3.5 gap-y-4 sm:col-span-1 sm:col-start-3 sm:row-start-2 sm:w-auto sm:flex-wrap sm:justify-self-end">
                 {footer.socialLinks.map((link) => {
