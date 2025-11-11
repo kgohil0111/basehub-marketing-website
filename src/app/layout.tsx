@@ -97,6 +97,10 @@ export const generateMetadata = async (): Promise<Metadata> => {
       site: data.site.settings.metadata.sitename,
       creator: xAccount,
     },
+    robots: {
+      index: true,
+      follow: true
+    }
   };
 };
 
