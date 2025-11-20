@@ -21,14 +21,22 @@ async function fetchPage(url: string): Promise<{ title: string; content: string 
     // Check cache first
     const cached = pageCache.get(url);
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log(`Cache hit for ${url}`);
       return JSON.parse(cached.content);
     }
+
+    console.log(`Fetching ${url}...`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; WebsiteSearchBot/1.0)',
       },
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       console.error(`Failed to fetch ${url}: ${response.status}`);

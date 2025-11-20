@@ -26,7 +26,7 @@ export default function ChatPage() {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() ) return
+    if (!input.trim()) return
 
     sendMessage({
       parts: [{ type: "text", text: input }],
@@ -81,11 +81,12 @@ export default function ChatPage() {
                   {message.parts.map((part, partIndex) => {
                     if (part.type === "text") {
                       return (
-                        <p key={partIndex} className="text-sm leading-relaxed break-words">
+                        <p key={partIndex} className="text-sm leading-relaxed break-words whitespace-pre-wrap">
                           {part.text}
                         </p>
                       )
                     }
+                    return null
                   })}
                 </div>
               </div>
@@ -104,15 +105,14 @@ export default function ChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your message..."
-            
               className="flex-1 rounded-lg border border-border bg-input px-3.5 py-2.5 text-sm text-foreground placeholder-muted-foreground transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
               autoComplete="off"
             />
-            <button type="submit" disabled={ !input.trim()} className="whitespace-nowrap">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button type="submit" disabled={!input.trim()} className="whitespace-nowrap rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+              <svg className="h-4 w-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7m0 0l-7 7m7-7H6" />
               </svg>
-              <span className="hidden sm:inline">Send</span>
+              <span className="hidden sm:inline ml-2">Send</span>
             </button>
           </form>
         </div>
