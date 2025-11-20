@@ -37,8 +37,8 @@ export default function ChatPage() {
   return (
     <div className="flex h-screen flex-col bg-background">
       <div className="border-b border-border/50 bg-gradient-to-r from-card via-background to-card px-6 py-4 shadow-sm">
-        <h1 className="text-xl font-bold text-foreground">Chat Assistant</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground">Powered by AI</p>
+        <h1 className="text-xl font-bold text-foreground">Website Assistant</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground">Ask me anything about this website</p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
@@ -49,7 +49,7 @@ export default function ChatPage() {
                 <div className="text-4xl">💬</div>
               </div>
               <h2 className="mb-2 text-xl font-semibold text-foreground">Start a Conversation</h2>
-              <p className="max-w-sm text-sm text-muted-foreground">Ask me anything and I`&apos;ll help you find answers</p>
+              <p className="max-w-sm text-sm text-muted-foreground">Ask me anything about this website and I&apos;ll search for answers</p>
             </div>
           )}
 
