@@ -23,7 +23,9 @@ import { formatDate } from "@/utils/dates";
 import { DarkLightImage } from "@/common/dark-light-image";
 import { PageView } from "@/app/_components/page-view";
 
-export const dynamic = "force-static";
+// Use time-based revalidation for blog posts
+export const revalidate = 60; // Revalidate every 60 seconds
+// export const dynamic = "force-static";
 
 export const generateStaticParams = async () => {
   const data = await basehub({ cache: "no-store" }).query({
@@ -173,7 +175,7 @@ export default async function BlogPage({ params: _params }: { params: Promise<{ 
                       </figure>
                     ))}
                   </div>
-                  <div className="flex divide-x divide-border text-sm font-normal text-text-tertiary dark:divide-dark-border dark:text-dark-text-tertiary">
+                  <div className="divide-border text-text-tertiary dark:divide-dark-border dark:text-dark-text-tertiary flex divide-x text-sm font-normal">
                     <p className="pr-2">{formatDate(blogpost.publishedAt)}</p>
                     <span className="pl-2">
                       {blogpost.categories.map((category) => (
@@ -189,7 +191,7 @@ export default async function BlogPage({ params: _params }: { params: Promise<{ 
                 {...blogpost.image}
                 priority
                 withPlaceholder
-                className="h-full max-h-[720px] w-full object-cover "
+                className="h-full max-h-[720px] w-full object-cover"
                 style={{ aspectRatio: blogpost.image.light.aspectRatio }}
               />
               <Section>

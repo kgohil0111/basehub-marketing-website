@@ -27,7 +27,10 @@ import { PageView } from "../_components/page-view";
 import { FreeformText, freeformTextFragment } from "../_sections/freeform-text";
 import { Form, formFragment } from "../_sections/form";
 
-export const dynamic = "force-static";
+// Use time-based revalidation (in seconds)
+export const revalidate = 60; // Revalidate every 60 seconds
+// Or use on-demand revalidation with webhook
+// export const dynamic = "force-static";
 
 export const generateStaticParams = async () => {
   const data = await basehub().query({

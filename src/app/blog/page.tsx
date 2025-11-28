@@ -13,7 +13,9 @@ import type { Metadata } from "next";
 import { basehub } from "basehub";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-static";
+// Use time-based revalidation for blog list
+export const revalidate = 60; // Revalidate every 60 seconds
+// export const dynamic = "force-static";
 
 export const generateMetadata = async (): Promise<Metadata | undefined> => {
   const data = await basehub({ draft: (await draftMode()).isEnabled }).query({
@@ -100,9 +102,9 @@ export default async function BlogPage() {
               >
                 <Search _searchKey={blogPost._searchKey} />
               </SearchHitsProvider>
-              {blog.featuredPosts
-                ?.slice(0, 3)
-                .map((post) => <BlogpostCard key={post._id} type="card" {...post} />)}
+              {blog.featuredPosts?.slice(0, 3).map((post) => (
+                <BlogpostCard key={post._id} type="card" {...post} />
+              ))}
             </div>
             <div className="w-full space-y-3">
               <Heading align="left">

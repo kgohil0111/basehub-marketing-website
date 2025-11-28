@@ -20,7 +20,9 @@ import { ChangelogLayout } from "../_components/changelog-header";
 import { PageView } from "@/app/_components/page-view";
 import { draftMode } from "next/headers";
 
-export const dynamic = "force-static";
+// Use time-based revalidation for changelog entries
+export const revalidate = 60; // Revalidate every 60 seconds
+// export const dynamic = "force-static";
 
 interface ChangelogPageParams {
   params: Promise<{

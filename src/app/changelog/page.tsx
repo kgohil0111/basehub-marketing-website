@@ -11,7 +11,9 @@ import type { Metadata } from "next";
 import { basehub } from "basehub";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-static";
+// Use time-based revalidation for changelog
+export const revalidate = 60; // Revalidate every 60 seconds
+// export const dynamic = "force-static";
 
 export const generateMetadata = async (): Promise<Metadata | undefined> => {
   const data = await basehub({ draft: (await draftMode()).isEnabled }).query({
