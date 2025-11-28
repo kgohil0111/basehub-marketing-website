@@ -6,6 +6,10 @@
 .pnp.js
 /.yarn/
 
+# Only use Yarn - ignore other package manager lock files
+package-lock.json
+pnpm-lock.yaml
+
 # testing
 /coverage
 

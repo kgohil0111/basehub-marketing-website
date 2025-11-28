@@ -1,19 +1,19 @@
-import { groq } from '@ai-sdk/groq';
-import { convertToModelMessages, streamText, type UIMessage } from 'ai';
-import { searchWebsite } from '@/lib/website-search';
+import { groq } from "@ai-sdk/groq";
+import { convertToModelMessages, streamText, type UIMessage } from "ai";
+import { searchWebsite } from "@/lib/website-search";
 
-const WEBSITE_DOMAIN = 'https://basehub-marketing-website-one-sooty.vercel.app';
+const WEBSITE_DOMAIN = "https://basehub-marketing-website-one-sooty.vercel.app";
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
-  console.log(messages, 'messages');
+  console.log(messages, "messages");
 
   // Get the last user message to search for relevant content
   const lastMessage = messages[messages.length - 1];
-  let userQuery = '';
+  let userQuery = "";
   if (lastMessage?.parts) {
     for (const part of lastMessage.parts) {
-      if ('text' in part) {
+      if ("text" in part) {
         userQuery = part.text;
         break;
       }
@@ -21,38 +21,43 @@ export async function POST(req: Request) {
   }
 
   // Search the website for relevant content
-  let websiteContext = '';
+  let websiteContext = "";
   const isGreeting = /^(hi|hello|hey|sup|yo|greetings|howdy)\s*$/i.test(userQuery.trim());
-  
+
   if (userQuery && userQuery.length > 3 && !isGreeting) {
     console.log(`Searching website for: "${userQuery}"`);
     try {
       // Add timeout to prevent hanging
       const searchPromise = searchWebsite(userQuery, 3); // Reduced to 3 pages for speed
-      const timeoutPromise = new Promise<[]>((resolve) => 
-        setTimeout(() => resolve([]), 10000) // 10 second timeout
+      const timeoutPromise = new Promise<[]>(
+        (resolve) => setTimeout(() => resolve([]), 10000), // 10 second timeout
       );
-      
+
       const searchResults = await Promise.race([searchPromise, timeoutPromise]);
-      
+
       if (searchResults.length > 0) {
-        websiteContext = '\n\nRELEVANT WEBSITE CONTENT:\n' + searchResults.map(result => 
-          `\n---\nPage: ${result.title}\nURL: ${result.url}\nContent: ${result.content}\n---`
-        ).join('\n');
+        websiteContext =
+          "\n\nRELEVANT WEBSITE CONTENT:\n" +
+          searchResults
+            .map(
+              (result) =>
+                `\n---\nPage: ${result.title}\nURL: ${result.url}\nContent: ${result.content}\n---`,
+            )
+            .join("\n");
         console.log(`Found ${searchResults.length} relevant results`);
       } else {
-        console.log('No relevant results found');
+        console.log("No relevant results found");
       }
     } catch (error) {
-      console.error('Error searching website:', error);
-      websiteContext = '\n\n[Website search temporarily unavailable]';
+      console.error("Error searching website:", error);
+      websiteContext = "\n\n[Website search temporarily unavailable]";
     }
   } else if (isGreeting) {
-    console.log('Greeting detected, skipping search');
+    console.log("Greeting detected, skipping search");
   }
 
   const result = streamText({
-    model: groq('openai/gpt-oss-120b'),
+    model: groq("openai/gpt-oss-120b"),
     system: `You are a helpful assistant for the website ${WEBSITE_DOMAIN}.
 
 IMPORTANT RULES:
@@ -65,7 +70,12 @@ IMPORTANT RULES:
 
 When answering:
 - Use the RELEVANT WEBSITE CONTENT provided below
-- Include source URLs in your response (e.g., "According to [Page Title](URL)...")
+- IMPORTANT: Format ALL links as standard Markdown: [clickable text](url)
+- Example: "Check our [Pricing page](https://basehub-marketing-website-one-sooty.vercel.app/pricing) for details"
+- DO NOT use brackets like 【】or [] around bare URLs
+- DO NOT write URLs without making them clickable links
+- Always write links as: [descriptive text](https://full-url-here)
+- If you mention a page, make it a clickable link
 - If the content doesn't contain the answer, say "I couldn't find that information on the website"
 - Be conversational and helpful${websiteContext}`,
     messages: convertToModelMessages(messages),
