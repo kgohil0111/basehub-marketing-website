@@ -2,6 +2,7 @@ import { ButtonLink } from "@/common/button";
 import { Pump } from "basehub/react-pump";
 import { buttonFragment } from "@/lib/basehub/fragments";
 import { fragmentOn } from "basehub";
+import { draftMode } from "next/headers";
 
 import { DesktopMenu, MobileMenu } from "./navigation-menu";
 import { DarkLightImageAutoscale } from "@/common/dark-light-image";
@@ -44,8 +45,11 @@ export const headerFragment = fragmentOn("Header", {
 export type HeaderFragment = fragmentOn.infer<typeof headerFragment>;
 
 export async function Header() {
+  const { isEnabled: isDraftMode } = await draftMode();
+
   return (
     <Pump
+      draft={isDraftMode}
       queries={[
         {
           site: {
@@ -82,9 +86,9 @@ export async function Header() {
         "use server";
 
         return (
-          <header className="sticky left-0 top-0 z-100 flex w-full flex-col border-b border-border bg-surface-primary dark:border-dark-border dark:bg-dark-surface-primary">
-            <div className="flex h-(--header-height) bg-surface-primary dark:bg-dark-surface-primary">
-              <div className="container mx-auto grid w-full grid-cols-header place-items-center content-center items-center px-6 *:first:justify-self-start">
+          <header className="border-border bg-surface-primary dark:border-dark-border dark:bg-dark-surface-primary sticky top-0 left-0 z-100 flex w-full flex-col border-b">
+            <div className="bg-surface-primary dark:bg-dark-surface-primary flex h-(--header-height)">
+              <div className="grid-cols-header container mx-auto grid w-full place-items-center content-center items-center px-6 *:first:justify-self-start">
                 <ButtonLink unstyled className="flex items-center ring-offset-2" href="/">
                   <DarkLightImageAutoscale priority {...settings.logo} />
                 </ButtonLink>
