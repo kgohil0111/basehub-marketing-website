@@ -177,9 +177,11 @@ export function cosineSimilarity(a: number[], b: number[]): number {
   let normB = 0;
 
   for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
+    const valA = a[i] ?? 0;
+    const valB = b[i] ?? 0;
+    dotProduct += valA * valB;
+    normA += valA * valA;
+    normB += valB * valB;
   }
 
   if (normA === 0 || normB === 0) {
