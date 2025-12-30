@@ -4,18 +4,61 @@ import type React from "react";
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
-export default function ChatPage() {
+interface RAGStatus {
+  documentCount: number;
+  status: "ready" | "empty" | "loading" | "error";
+}
+
+export default function ChatRAGPage() {
   const [input, setInput] = useState("");
+  const [ragStatus, setRagStatus] = useState<RAGStatus>({ documentCount: 0, status: "loading" });
+  const [isIngesting, setIsIngesting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { messages, sendMessage } = useChat({
     transport: new DefaultChatTransport({
-      api: "/api/chat",
+      api: "/api/chat-rag",
     }),
   });
+
+  const checkRAGStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/rag/ingest");
+      const data = await res.json();
+      setRagStatus({ documentCount: data.documentCount, status: data.status });
+    } catch {
+      setRagStatus({ documentCount: 0, status: "error" });
+    }
+  }, []);
+
+  const triggerIngestion = async () => {
+    setIsIngesting(true);
+    setRagStatus((prev) => ({ ...prev, status: "loading" }));
+    try {
+      const res = await fetch("/api/rag/ingest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ maxPages: 20 }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRagStatus({ documentCount: data.documentCount, status: "ready" });
+      } else {
+        setRagStatus({ documentCount: 0, status: "error" });
+      }
+    } catch {
+      setRagStatus({ documentCount: 0, status: "error" });
+    } finally {
+      setIsIngesting(false);
+    }
+  };
+
+  useEffect(() => {
+    checkRAGStatus();
+  }, [checkRAGStatus]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -37,9 +80,48 @@ export default function ChatPage() {
 
   return (
     <div className="bg-background flex h-screen flex-col">
-      <div className="border-border/50 from-card via-background to-card border-b bg-gradient-to-r px-6 py-4 shadow-sm">
-        <h1 className="text-foreground text-xl font-bold">Website Assistant</h1>
-        <p className="text-muted-foreground mt-0.5 text-xs">Ask me anything about this website</p>
+      <div className="border-border/50 from-card via-background to-card border-b bg-linear-to-r px-6 py-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-foreground text-xl font-bold">Website Assistant (RAG)</h1>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              Powered by AI SDK embeddings &amp; semantic search
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-xs">
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  ragStatus.status === "ready"
+                    ? "bg-green-500"
+                    : ragStatus.status === "loading"
+                      ? "animate-pulse bg-yellow-500"
+                      : ragStatus.status === "error"
+                        ? "bg-red-500"
+                        : "bg-gray-400"
+                }`}
+              />
+              <span className="text-muted-foreground">
+                {ragStatus.status === "ready"
+                  ? `${ragStatus.documentCount} docs`
+                  : ragStatus.status === "loading"
+                    ? "Loading..."
+                    : ragStatus.status === "error"
+                      ? "Error"
+                      : "Empty"}
+              </span>
+            </div>
+            {(ragStatus.status === "empty" || ragStatus.status === "error") && (
+              <button
+                onClick={triggerIngestion}
+                disabled={isIngesting}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded px-2 py-1 text-xs font-medium disabled:opacity-50"
+              >
+                {isIngesting ? "Indexing..." : "Index Website"}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
@@ -47,36 +129,44 @@ export default function ChatPage() {
           {messages.length === 0 && (
             <div className="flex h-full flex-col items-center justify-center text-center">
               <div className="bg-card mb-4 rounded-2xl p-4">
-                <div className="text-4xl">💬</div>
+                <div className="text-4xl">🔍</div>
               </div>
-              <h2 className="text-foreground mb-2 text-xl font-semibold">Start a Conversation</h2>
+              <h2 className="text-foreground mb-2 text-xl font-semibold">RAG-Powered Search</h2>
               <p className="text-muted-foreground max-w-sm text-sm">
-                Ask me anything about this website and I&apos;ll search for answers
+                {ragStatus.status === "ready"
+                  ? "Ask me anything about this website - I'll use semantic search to find relevant content"
+                  : "Click 'Index Website' to populate the knowledge base first"}
               </p>
 
               {/* RAG Logic Explanation */}
-              <div className="mt-8 max-w-lg rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-left">
-                <h3 className="mb-2 text-sm font-semibold text-gray-700">🔍 How RAG Works Here</h3>
-                <ol className="space-y-2 text-xs text-gray-600">
+              <div className="mt-8 max-w-lg rounded-xl border border-dashed border-blue-300 bg-blue-50 p-4 text-left">
+                <h3 className="mb-2 text-sm font-semibold text-blue-700">
+                  🧠 How Embedding RAG Works
+                </h3>
+                <ol className="space-y-2 text-xs text-blue-600">
                   <li>
-                    <span className="font-medium">1. Crawl:</span> Cheerio fetches &amp; parses
-                    website pages
+                    <span className="font-medium">1. Ingest:</span> Crawl website &amp; chunk
+                    content into pieces
                   </li>
                   <li>
-                    <span className="font-medium">2. Search:</span> Keyword matching finds relevant
-                    content
+                    <span className="font-medium">2. Embed:</span> Convert chunks to TF-IDF vectors
+                    (free, no API)
                   </li>
                   <li>
-                    <span className="font-medium">3. Context:</span> Top results are injected into
-                    LLM prompt
+                    <span className="font-medium">3. Store:</span> Save vectors to JSON file or
+                    PostgreSQL
                   </li>
                   <li>
-                    <span className="font-medium">4. Generate:</span> Groq LLM answers using the
-                    context
+                    <span className="font-medium">4. Search:</span> Cosine similarity + keyword
+                    boost finds matches
+                  </li>
+                  <li>
+                    <span className="font-medium">5. Generate:</span> Groq LLM answers using
+                    retrieved context
                   </li>
                 </ol>
-                <div className="mt-3 rounded bg-gray-100 p-2 font-mono text-[10px] text-gray-500">
-                  User Query → Crawl Website → Match Keywords → Build Context → LLM Response
+                <div className="mt-3 rounded bg-blue-100 p-2 font-mono text-[10px] text-blue-500">
+                  Ingest → Embed → Store → Query → Similarity Search → Context → LLM
                 </div>
               </div>
             </div>
@@ -90,7 +180,7 @@ export default function ChatPage() {
               }`}
             >
               <div
-                className={`mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full ${
+                className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
                   message.role === "user"
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-secondary-foreground"
@@ -150,9 +240,8 @@ export default function ChatPage() {
                                 p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
                               }}
                             >
-                              {/* Preprocess text to fix any special bracket links */}
                               {part.text
-                                .replace(/【([^】]+)】/g, "[$1]($1)") // Convert 【URL】 to [URL](URL)
+                                .replace(/【([^】]+)】/g, "[$1]($1)")
                                 .replace(/\[https?:\/\/[^\]]+\]/g, (match) => {
                                   const url = match.slice(1, -1);
                                   return `[Link](${url})`;
@@ -162,7 +251,7 @@ export default function ChatPage() {
                         );
                       } else {
                         return (
-                          <p key={partIndex} className="text-sm leading-relaxed break-words">
+                          <p key={partIndex} className="text-sm leading-relaxed wrap-break-word">
                             {part.text}
                           </p>
                         );
@@ -179,7 +268,7 @@ export default function ChatPage() {
         </div>
       </div>
 
-      <div className="border-border/50 from-card/50 to-background border-t bg-gradient-to-t px-4 py-3 sm:px-6">
+      <div className="border-border/50 from-card/50 to-background border-t bg-linear-to-t px-4 py-3 sm:px-6">
         <div className="mx-auto max-w-2xl">
           <form onSubmit={handleSend} className="flex gap-2">
             <input
@@ -189,10 +278,11 @@ export default function ChatPage() {
               placeholder="Type your message..."
               className="border-border bg-input text-foreground placeholder-muted-foreground focus:border-primary focus:ring-primary/50 flex-1 rounded-lg border px-3.5 py-2.5 text-sm transition-all focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               autoComplete="off"
+              disabled={ragStatus.status !== "ready"}
             />
             <button
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input.trim() || ragStatus.status !== "ready"}
               className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2.5 text-sm font-medium whitespace-nowrap disabled:opacity-50"
             >
               <svg
